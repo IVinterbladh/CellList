@@ -10,12 +10,8 @@ return std::sqrt(std::pow(coord2[0]-coord1[0],2) + std::pow(coord2[1]- coord1[1]
 };
 
 // calculate nr of cells in each box dimensions, taking ceiling of side length/cutoff (rounding up)
-std::array<int,3> CellList::boxtoCells(boxdim box, const double cutoff){
-int nrcells[3] = {int(ceil(box[0]/cutoff)),int(ceil(box[1]/cutoff)),int(ceil(box[2]/cutoff))};
-std::array<int,3> nrcells_array {nrcells[0], nrcells[1], nrcells[2]};
-// total number of cells in box (should be positive)
-//int totcells = abs(nrcells[0]*nrcells[1]*nrcells[2]);
-return nrcells_array;
+void CellList::updateBoxtoCells(boxdim box, const double cutoff){
+boxcelldim = {int(ceil(box[0]/cutoff)),int(ceil(box[1]/cutoff)),int(ceil(box[2]/cutoff))};
 };
 
 // find which cell particle is in: calculate how many "cutoffs" from origin particle is in each direction
@@ -25,8 +21,8 @@ return index; // returning index of cell point is located in
 };
 
 // creating a map with cell index as key and value a set of all point-indices located within corresponding cell
-std::map<cellindex, set<pointindex>> CellList::genCell(boxdim box, std::vector<point> coords, int nr_particles, double cutoff){
-std::array<int,3> nrcells = boxtoCells(box, cutoff); // calculating nr of cells in each dimension of box
+void CellList::genCell(boxdim box, std::vector<point> coords, int nr_particles, double cutoff){
+updateBoxtoCells(box, cutoff); // calculating nr of cells in each dimension of box
 // assign each particle to cell
 std::multimap<cellindex, pointindex> coords_in; // cell index + point index
 for(int i = 0; i < nr_particles; i++){
@@ -35,10 +31,10 @@ cellindex index = findCell(coords[i], cutoff);
 coords_in.insert({index, i});
 }
 // find all points that are in same cell and put in a set to make a map with specific keys
-std::map<cellindex, set<pointindex>> cellPIndex; // cell index + list of all points in that cell
-for (int x =0; x<nrcells[0]; x++){ // loop over each dimension to go through all cells
-    for(int y=0; y<nrcells[1]; y++){
-        for(int z=0; z<nrcells[2]; z++){
+//std::map<cellindex, set<pointindex>> cellPIndex; // cell index + list of all points in that cell
+for (int x =0; x<boxcelldim[0]; x++){ // loop over each dimension to go through all cells
+    for(int y=0; y<boxcelldim[1]; y++){
+        for(int z=0; z<boxcelldim[2]; z++){
             std::set<pointindex> pts_index;
             cellindex c_index = {x,y,z}; // defining cell index
             //cout << x << ", " << y << ", " << z << "\n";
@@ -48,15 +44,14 @@ for (int x =0; x<nrcells[0]; x++){ // loop over each dimension to go through all
                     //cout << it->second << "\n";
                     pts_index.insert(it->second); // adding all point indices to set
                 }
-                cellPIndex.insert({c_index, pts_index}); // adding c_index as key and its corresponding set with all points located in the cell  
+                cellindexMap.insert({c_index, pts_index}); // adding c_index as key and its corresponding set with all points located in the cell  
             }
             if(pts.first == pts.second){// cell empty
-                cellPIndex.insert({c_index, pts_index});
+                cellindexMap.insert({c_index, pts_index});
             }
         }
     }
 }
-return cellPIndex;
 };
 
 
@@ -87,9 +82,9 @@ return neigh_cells;
 
 
 // generating the Cell List
-std::map< pointindex, set<pointindex>> CellList::genCellList(boxdim box, std::vector<point> coords, std::map<cellindex, set<pointindex>> indexpts, int nr_particles, double cutoff){
-std::map< pointindex, set<pointindex>> celllist;
-std::array<int,3> nrcells = boxtoCells(box, cutoff); // calculate nr of cells in each dim
+std::map< pointindex, std::set<pointindex>> CellList::genCellList(boxdim box, std::vector<point> coords /*, std::map<cellindex, std::set<pointindex>> indexpts*/, int nr_particles, double cutoff){
+std::map< pointindex, std::set<pointindex>> celllist;
+updateBoxtoCells(box, cutoff); // calculate nr of cells in each dim
 // loop over all points/particles
 for (int i = 0; i < nr_particles; i++){
     cout << i << " pts1 \n";
@@ -100,20 +95,20 @@ for (int i = 0; i < nr_particles; i++){
     std::map< point,pointindex> pts_coords;
     // add all points located in the neighbouring cells to a set
     for( auto c = cell_neigh.begin(); c != cell_neigh.end(); c++){
-        auto cindex = indexpts.find(*c);
-        if(cindex!=indexpts.end()){ // the index was in map - c is one of the cells
+        auto cindex = cellindexMap.find(*c);
+        if(cindex!=cellindexMap.end()){ // the index was in map - c is one of the cells
            auto pts = cindex->second;
             if(pts.empty()==0){ // checking that set is not empty/cell is not empty
                 all_pts.insert(pts.begin(), pts.end());
             }  
         }
-        if(cindex == indexpts.end()){ // cell index not found due to perioditicity - c is one of the "ghost" cells
+        if(cindex == cellindexMap.end()){ // cell index not found due to perioditicity - c is one of the "ghost" cells
             //cout << "ghostcell" << "\n";
             cellindex ghostcell = *c;
             //cout << ghostcell[0] << ghostcell[1] << ghostcell[2] << "\n";
-            cellindex ghostindex = {(nrcells[0] + (ghostcell[0]%nrcells[0]))%nrcells[0], (nrcells[1] + (ghostcell[1]%nrcells[1]))%nrcells[1], (nrcells[2] + (ghostcell[2]%nrcells[2]))%nrcells[2]}; // with modulo find which cells the perioditicity corresponds to
+            cellindex ghostindex = {(boxcelldim[0] + (ghostcell[0]%boxcelldim[0]))%boxcelldim[0], (boxcelldim[1] + (ghostcell[1]%boxcelldim[1]))%boxcelldim[1], (boxcelldim[2] + (ghostcell[2]%boxcelldim[2]))%boxcelldim[2]}; // with modulo find which cells the perioditicity corresponds to
             //cout << ghostindex[0] << ghostindex[1] << ghostindex[2] << "\n";
-            auto cindex = indexpts.find(ghostindex);
+            auto cindex = cellindexMap.find(ghostindex);
             auto pts = cindex->second;
             if( pts.empty()==0){ // checking that set is not empty/cell is not empty
                 std::array<double,3> cell_diff = {double(ghostcell[0] - ghostindex[0]), double(ghostcell[1]-ghostindex[1]), double(ghostcell[2]-ghostindex[2])};
@@ -147,14 +142,14 @@ for (int i = 0; i < nr_particles; i++){
 return celllist; // returning cell list as a map
 };
 
-std::set<pointindex> CellList::genPointList(int pointin, boxdim box, std::vector<point> coords, std::map<cellindex, set<pointindex>> indexpts, int nr_particles, double cutoff){
+std::set<pointindex> CellList::genPointList(int pointin, boxdim box, std::vector<point> coords /*, std::map<cellindex, set<pointindex>> indexpts*/, int nr_particles, double cutoff){
 std::set<pointindex> ptslist; // set to save point indices in
 cellindex cell = findCell(coords[pointin], cutoff); // find cell index where input point is
 std::set<cellindex> cell_neigh = findCellneighbours(box, cell, cutoff); // finding all neightbouring cells
 std::set<pointindex> all_pts;
 // add all points located in the neighbouring cells to a set
 for( auto c = cell_neigh.begin(); c != cell_neigh.end(); c++){
-    auto pts = indexpts.find(*c)->second;
+    auto pts = cellindexMap.find(*c)->second;
     all_pts.insert(pts.begin(), pts.end());
 }
 // go through points from neighbouring cells to see which ones are within cutoff to the input point

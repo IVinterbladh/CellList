@@ -20,6 +20,7 @@ private:
 boxdim box;
 double cutoff;
 std::map<cellindex, std::set<pointindex>> cellindexMap;
+std::array<int,3> boxcelldim;
 
 ///
 /// @brief Calculating number of cells in box depending on cutoff
@@ -31,7 +32,8 @@ std::map<cellindex, std::set<pointindex>> cellindexMap;
 ///
 /// @return array with number of cells in each dimension
 ///
-std::array<int,3> boxtoCells(boxdim box, double cutoff);
+void updateBoxtoCells(boxdim box, double cutoff);
+
 
 public:
 
@@ -71,7 +73,7 @@ cellindex findCell(point coord, double cutoff);
 ///
 /// @return map with an array of the cell index and as value a set of all point-indices 
 ///
-std::map<cellindex, std::set<pointindex>> genCell(boxdim box, std::vector<point> coords, int nr_particles, double cutoff);
+void genCell(boxdim box, std::vector<point> coords, int nr_particles, double cutoff);
 
 
 ///
@@ -99,7 +101,7 @@ std::set<cellindex> findCellneighbours(boxdim box, const cellindex& c_index, dou
 ///
 /// @return a Cell List as a map, key is a point index and the value is a set containing all indices to points interacting with the key point
 ///
-std::map< pointindex, std::set<pointindex>> genCellList(boxdim box, std::vector<point> coords, std::map<cellindex, std::set<pointindex>> indexpts, int nr_particles, double cutoff);
+std::map< pointindex, std::set<pointindex>> genCellList(boxdim box, std::vector<point> coords /*, std::map<cellindex, std::set<pointindex>> indexpts*/, int nr_particles, double cutoff);
 
 ///
 /// @brief Compute List with all points located within the cutoff from one specific point
@@ -115,7 +117,7 @@ std::map< pointindex, std::set<pointindex>> genCellList(boxdim box, std::vector<
 ///
 /// @return a set containing all indices to points interacting with the input point
 ///
-std::set<pointindex> genPointList(pointindex pointin, boxdim box, std::vector<point> coords, std::map<array<int,3>, set<int>> indexpts, int nr_particles, double cutoff);
+std::set<pointindex> genPointList(pointindex pointin, boxdim box, std::vector<point> coords /*, std::map<array<int,3>, set<int>> indexpts*/, int nr_particles, double cutoff);
 
 
 ///

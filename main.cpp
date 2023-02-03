@@ -5,6 +5,7 @@
 
 int main(){
 CellList::CellList list;
+/*
 std::array<double,3> c1 = {0.2,0.2,0.2};
 std::array<double,3> c2 = {0.0,0.0,0.0};
 std::array<double,3> c3 = {0.95,0.95,0.95};
@@ -29,7 +30,7 @@ for( auto s = set.begin(); s != set.end(); s++){
     std::cout << *s << "\n " ;
 }
 
-};
+}; */
 return 0;
 };
 
