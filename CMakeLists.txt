@@ -4,7 +4,7 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS YES)
 
-project(celllist)
+project(celllist VERSION 0.1.0 LANGUAGES CXX)
 
 set(objects src/celllist.cpp)
 set(headers include/celllist.h)
@@ -22,6 +22,28 @@ target_include_directories(celllist
 set_target_properties(celllist PROPERTIES PUBLIC_HEADER "${headers}")
 target_compile_options(celllist PRIVATE -Wall -Wextra -Wshadow -Wconversion -Wno-language-extension-token)
 
+# install target
+include(GNUInstallDirs)
+install(TARGETS celllist
+    EXPORT celllist-export
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION include
+    )
+install(FILES cmake/celllistConfig.cmake DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/celllist)
+
+# export celllist
+install(EXPORT celllist-export
+    FILE
+    celllistTargets.cmake
+    NAMESPACE
+    celllist::
+    DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/cmake/celllist
+    )
+
 include_directories(include/)
 add_executable(test src/test.cpp)
+target_link_libraries(test celllist)
+
 
