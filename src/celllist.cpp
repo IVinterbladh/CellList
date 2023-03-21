@@ -9,25 +9,28 @@ boxcelldim = {int(ceil(box[0]/cutoff)),int(ceil(box[1]/cutoff)),int(ceil(box[2]/
 };
 
 // setting up values to private variables and constructing box dimensions
-void CellList::set_upCelllist(boxdim boxdim, const double givencutoff){
+void CellList::set_upCellList(boxdim boxdim, const double givencutoff){
     cutoff = givencutoff;
     box = boxdim;
     updateBoxtoCells();
 }
 
 // calculating the distance between two coordinate points with pythagoras theorem
-double CellList::distance(point coord1, point coord2){
+template< typename P>
+double CellList::distance(P coord1, P coord2){
 return std::sqrt(std::pow(coord2[0]-coord1[0],2) + std::pow(coord2[1]- coord1[1], 2)+ std::pow(coord2[2]- coord1[2], 2));
 };
 
 // find which cell particle is in: calculate how many "cutoffs" from origin particle is in each direction
-cellindex CellList::findCell(point coord){
+template<typename P>
+cellindex CellList::findCell(P coord){
 cellindex index = {int(floor(coord[0]/cutoff)),int(floor(coord[1]/cutoff)),int(floor(coord[2]/cutoff))};
 return index; // returning index of cell where point is located
 };
 
 // creating a map with cell index as key and value a set of all point-indices located within corresponding cell
-void CellList::genCell(std::vector<point> coords, int nr_particles){
+template<typename Pvector>
+void CellList::genCell(Pvector coords, int nr_particles){
 // assign each particle to cell
 std::multimap<cellindex, pointindex> coords_in; // cell index + point index
 for(int i = 0; i < nr_particles; i++){
@@ -85,7 +88,8 @@ for (auto _x : x)
 return neigh_cells;
 };
 
-std::set<pointindex> CellList::genPointList(const pointindex& pointin, std::vector<point> coords, int nr_particles){
+template<typename Pvector>
+std::set<pointindex> CellList::genPointList(const pointindex& pointin, Pvector coords, int nr_particles){
 std::set<pointindex> ptslist; // set to save point indices in
 cellindex cell = findCell(coords[pointin]); // find cell index where input point is
 std::set<cellindex> cell_neigh = findCellneighbours(cell); // finding all neightbouring cells
@@ -133,7 +137,8 @@ return ptslist; // resturn set of indices to points within cutoff from the input
 };
 
 // generating the Cell List
-std::map< pointindex, std::set<pointindex>> CellList::genCellList(std::vector<point> coords, int nr_particles){
+template<typename Pvector>
+std::map< pointindex, std::set<pointindex>> CellList::genCellList(Pvector coords, int nr_particles){
 std::map< pointindex, std::set<pointindex>> celllist;
 // loop over all points/particles
 for (int i = 0; i < nr_particles; i++){
@@ -144,9 +149,10 @@ return celllist; // returning cell list as a map
 };
 
 // after movement of one point update which cell point is located in 
-void CellList::updateOnePosition(const pointindex& pointin, std::vector<point> old_coords, std::vector<point> new_coords, int nr_particles){
-cellindex old_cell = findCell(old_coords[pointin]); // find which cell point was located in    
-cellindex new_cell = findCell(new_coords[pointin]); // find which cell point is now located in
+template<typename P>
+void CellList::updateOnePosition(const pointindex& pointin, P old_pcoord, P new_pcoord){
+cellindex old_cell = findCell(old_pcoord); // find which cell point was located in    
+cellindex new_cell = findCell(new_pcoord); // find which cell point is now located in
 if (old_cell != new_cell){ // check if point moved enough to have changed cell
     auto erase = cellindexMap.find(old_cell)->second;
     erase.erase(pointin); // erase point index from old cell location
@@ -157,10 +163,11 @@ if (old_cell != new_cell){ // check if point moved enough to have changed cell
 }//now technically this is the new_cellptsin (cell index + points indices located in respective cell)  
 };
 
-// after movement update which cells each point is located in 
-void CellList::updatePositions(std::vector<point> old_coords, std::vector<point> new_coords, int nr_particles){
+// after movement update which cells each point is located in
+template<typename Pvector>
+void CellList::updatePositions(Pvector old_coords, Pvector new_coords, int nr_particles){
 for( int i =0 ; i< nr_particles; i++){ // loop over points
-    updateOnePosition(i, old_coords, new_coords, nr_particles); // calling function updating one position for every particle
+    updateOnePosition(i, old_coords[i], new_coords[i], nr_particles); // calling function updating one position for every particle
 }
 };
 }// namespace CellList
