@@ -34,12 +34,15 @@ public:
 ///
 /// @brief Setting up the given parameters
 ///        
-/// @details void, box dimensions and cutoff set for the private variables and boxcelldim constructed
+/// @details void, box dimensions and cutoff set for the private variables and boxcelldim and cellindexMap constructed
 ///   
 /// @param[in] boxdim: provided dimensions of box; height, length, width
 /// @param[in] givencutoff: provided value used as cutoff, beyond cutoff no interaction between particles
-///
-void set_upCellList(boxdim boxdim, const double givencutoff);
+/// @param[in] coords: the coordinates of each point in x,y,z
+/// @param[in] nr_points: int of number of particles/point
+/// 
+template<typename Pvector> // typename Pvector representing list/vector/etc of the point coordinates
+void set_upCellList(boxdim boxdim, const double givencutoff, Pvector coords, int nr_points);
 
 ///
 /// @brief Calculating the distance 
@@ -51,7 +54,7 @@ void set_upCellList(boxdim boxdim, const double givencutoff);
 ///
 /// @return the distance as a double
 ///
-template< typename P>
+template< typename P> //typename P representing type of point ´
 double distance(P coord1, P coord2);
 
 ///
@@ -63,7 +66,7 @@ double distance(P coord1, P coord2);
 ///
 /// @return array with the cell index
 ///
-template<typename P>
+template<typename P> //typename P representing type of point ´
 cellindex findCell(P coord);
 
 ///
@@ -71,13 +74,13 @@ cellindex findCell(P coord);
 ///        
 /// @details map with cell index as key and value a set of point-indices located in respective cell
 ///
-/// @param[in] coords: vector of doubles containing the coordinates for respective point
-/// @param[in] nr_particles: number of particles/points
+/// @param[in] coords: the coordinates of each point in x,y,z
+/// @param[in] nr_points: number of particles/points
 ///
 /// @return map with an array of the cell index and as value a set of all point-indices 
 ///
-template<typename Pvector>
-void genCell(Pvector coords, int nr_particles);
+template<typename Pvector> // typename Pvector representing list/vector/etc of the point coordinates
+void generateCell(Pvector coords, int nr_points);
 
 
 ///
@@ -97,28 +100,28 @@ std::set<cellindex> findCellneighbours(const cellindex& c_index); // change to v
 /// @details 
 /// 
 /// @param[in] pointin: index of point for which interacting points should be found    
-/// @param[in] coords: array of doubles containing the coordinates for respective point and the cell number it is located in
+/// @param[in] coords: the coordinates of each point in x,y,z
 /// @param[in] indexpts: a map providing cell as key and value which points are located within it
-/// @param[in] nr_particles: number of particles/points
+/// @param[in] nr_points: number of particles/points
 ///
 /// @return a set containing all indices to points interacting with the input point
 ///
 template<typename Pvector>
-std::set<pointindex> genPointList(const pointindex& pointin, Pvector coords, int nr_particles);
+std::set<pointindex> generatePointList(const pointindex& pointin, Pvector coords, int nr_points);
 
 ///
 /// @brief Computing the Cell List with all coordinate combinations located within the cutoff
 ///        
 /// @details 
 ///     
-/// @param[in] coords: array of doubles containing the coordinates for respective point and the cell number it is located in
+/// @param[in] coords: the coordinates of each point in x,y,z
 /// @param[in] indexpts: a map providing cell as key and value which points are located within it
-/// @param[in] nr_particles: number of particles/points
+/// @param[in] nr_points: number of particles/points
 ///
 /// @return a Cell List as a map, key is a point index and the value is a set containing all indices to points interacting with the key point
 ///
 template<typename Pvector>
-std::map< pointindex, std::set<pointindex>> genCellList(Pvector coords, int nr_particles);
+std::map< pointindex, std::set<pointindex>> generateCellList(Pvector coords, int nr_points);
 
 ///
 /// @brief After movement of one point- update position in cell
@@ -139,14 +142,14 @@ void updateOnePosition(const pointindex& pointin, P old_pcoord, P new_pcoord);
 ///        
 /// @details 
 ///          
-/// @param[in] old_coords: array of doubles containing the coordinates for respective point before movement
-/// @param[in] new_coords: array of doubles containing the coordinates for respective point after movement
-/// @param[in] nr_particles: number of particles/points
+/// @param[in] old_coords: the coordinates of each point in x,y,z berfore movement
+/// @param[in] new_coords: the coordinates of each point in x,y,z after movement
+/// @param[in] nr_points: number of particles/points
 ///
 /// @return updated map with cells as key and their respective values being a set of points located in them -> new_cellptsin
 ///
 template<typename Pvector>
-void updatePositions(Pvector old_coords, Pvector new_coords, int nr_particles);
+void updatePositions(Pvector old_coords, Pvector new_coords, int nr_points);
 
 
 };

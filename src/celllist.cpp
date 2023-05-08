@@ -1,6 +1,5 @@
 #include "celllist.h"
 
-using namespace std;
 
 namespace CellList{
 // calculate nr of cells in each box dimensions, taking ceiling of side length/cutoff (rounding up)
@@ -9,10 +8,12 @@ boxcelldim = {int(ceil(box[0]/cutoff)),int(ceil(box[1]/cutoff)),int(ceil(box[2]/
 };
 
 // setting up values to private variables and constructing box dimensions
-void CellList::set_upCellList(boxdim boxdim, const double givencutoff){
+template<typename Pvector>
+void CellList::set_upCellList(boxdim boxdim, const double givencutoff, Pvector coords, int nr_points){
     cutoff = givencutoff;
     box = boxdim;
     updateBoxtoCells();
+    generateCell(coords, nr_points);
 }
 
 // calculating the distance between two coordinate points with pythagoras theorem
@@ -30,10 +31,10 @@ return index; // returning index of cell where point is located
 
 // creating a map with cell index as key and value a set of all point-indices located within corresponding cell
 template<typename Pvector>
-void CellList::genCell(Pvector coords, int nr_particles){
+void CellList::generateCell(Pvector coords, int nr_points){
 // assign each particle to cell
 std::multimap<cellindex, pointindex> coords_in; // cell index + point index
-for(int i = 0; i < nr_particles; i++){
+for(int i = 0; i < nr_points; i++){
 // find which cell particle is in: calculate how many "cutoffs" particle is in each direction
 cellindex index = findCell(coords[i]);
 coords_in.insert({index, i});
@@ -89,7 +90,7 @@ return neigh_cells;
 };
 
 template<typename Pvector>
-std::set<pointindex> CellList::genPointList(const pointindex& pointin, Pvector coords, int nr_particles){
+std::set<pointindex> CellList::generatePointList(const pointindex& pointin, Pvector coords, int nr_points){
 std::set<pointindex> ptslist; // set to save point indices in
 cellindex cell = findCell(coords[pointin]); // find cell index where input point is
 std::set<cellindex> cell_neigh = findCellneighbours(cell); // finding all neightbouring cells
@@ -138,11 +139,11 @@ return ptslist; // resturn set of indices to points within cutoff from the input
 
 // generating the Cell List
 template<typename Pvector>
-std::map< pointindex, std::set<pointindex>> CellList::genCellList(Pvector coords, int nr_particles){
+std::map< pointindex, std::set<pointindex>> CellList::generateCellList(Pvector coords, int nr_points){
 std::map< pointindex, std::set<pointindex>> celllist;
 // loop over all points/particles
-for (int i = 0; i < nr_particles; i++){
-    std::set<pointindex> pointlist = genPointList(i, coords, nr_particles);
+for (int i = 0; i < nr_points; i++){
+    std::set<pointindex> pointlist = generatePointList(i, coords, nr_points);
     celllist.insert({i, pointlist}); // inserting key point index and value a set with point indices to all points within cutoff
 }
 return celllist; // returning cell list as a map
@@ -165,9 +166,9 @@ if (old_cell != new_cell){ // check if point moved enough to have changed cell
 
 // after movement update which cells each point is located in
 template<typename Pvector>
-void CellList::updatePositions(Pvector old_coords, Pvector new_coords, int nr_particles){
-for( int i =0 ; i< nr_particles; i++){ // loop over points
-    updateOnePosition(i, old_coords[i], new_coords[i], nr_particles); // calling function updating one position for every particle
+void CellList::updatePositions(Pvector old_coords, Pvector new_coords, int nr_points){
+for( int i =0 ; i< nr_points; i++){ // loop over points
+    updateOnePosition(i, old_coords[i], new_coords[i], nr_points); // calling function updating one position for every particle
 }
 };
 }// namespace CellList
