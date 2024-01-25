@@ -7,9 +7,8 @@
 #include <math.h> 
 
 
-
 namespace CellList{
-
+ 
     using point = std::array<double,3>;
     using pointindex = int;
     using boxdim = std::array<double,3>;
